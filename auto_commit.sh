@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to your repository
-cd Django_Tutorials
+cd auto_commit
 
 # Create or update a timestamp file
 echo "Last updated: $(date)" > last_updated.txt
