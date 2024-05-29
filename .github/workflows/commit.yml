@@ -4,7 +4,7 @@ on:
   schedule:
 #    - cron: '0 2 * * *'  # Runs at 2 AM UTC daily
 #     - cron: '*/5 * * * *'  # Runs every 5 minutes
-     - cron: '0 */5 * * *'  # Runs every 5 hours
+     # - cron: '0 */5 * * *'  # Runs every 5 hours
 jobs:
   commit:
     runs-on: ubuntu-latest
