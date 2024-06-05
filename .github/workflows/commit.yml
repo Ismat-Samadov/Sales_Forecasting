@@ -2,7 +2,7 @@ name: Automated Commit and Push
 
 on:
   schedule:
-    - cron: '0 */5 * * *'  # Runs every 5 hours
+    # - cron: '0 */5 * * *'  # Runs every 5 hours
 
 jobs:
   commit:
