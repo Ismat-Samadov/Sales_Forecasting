@@ -35,13 +35,14 @@ try:
 except Exception as e:
     print(f"Error loading preprocessed data: {e}")
 
+
 def predict_in_batches(predict_data, model, batch_size=100):
     total_sales = []
     
     for i in range(0, len(predict_data), batch_size):
-        batch = predict_data.iloc[i:i + batch_size]
+        batch = predict_data.iloc[i:i + batch_size].copy()  # Make an explicit copy of the batch
         predictions = model.predict(batch)
-        batch.loc[:, 'predicted_sales'] = predictions  # Use .loc to avoid the warning
+        batch['predicted_sales'] = predictions
         total_sales.append(batch)
         
     total_sales_df = pd.concat(total_sales, ignore_index=True)
