@@ -49,17 +49,19 @@ for lag in [1, 2, 3]:
 # Fill missing values with 0
 monthly_sales.fillna(0, inplace=True)
 
-# Prediction route
 @app.route('/predict', methods=['POST'])
 def predict_sales():
     try:
         # Extract input data
         input_data = request.json
+        print(f"Received input data: {input_data}")
+
         month = input_data['month']
         year = input_data['year']
 
         # Convert month and year to date_block_num
         date_block_num = (year - 2013) * 12 + (month - 1)
+        print(f"Using date_block_num: {date_block_num}")
 
         # Create a dataset for predictions for all shops (aggregated by shop)
         predict_data = pd.DataFrame({
@@ -67,21 +69,18 @@ def predict_sales():
             'item_price': 1000,  # Placeholder value
         })
 
-        # For each shop, predict total sales for that shop by summing item sales
         total_sales = []
         for shop_id in shops['shop_id']:
-            # Create dummy data for items in each shop
             shop_items = pd.DataFrame({
                 'shop_id': [shop_id] * len(items),
                 'item_id': items['item_id'],
-                'item_price': 1000,  # Placeholder value
+                'item_price': 1000,
                 'item_category_id': items['item_category_id'],
                 'item_cnt_month_lag_1': 0,
                 'item_cnt_month_lag_2': 0,
                 'item_cnt_month_lag_3': 0
             })
 
-            # Predict for each item in the shop
             predictions = model.predict(shop_items)
             total_shop_sales = predictions.sum()  # Sum the predicted sales for the shop
             total_sales.append({
@@ -89,11 +88,10 @@ def predict_sales():
                 'predicted_sales': total_shop_sales
             })
 
-        # Convert results to DataFrame
         total_sales_df = pd.DataFrame(total_sales)
-
-        # Sort predictions by sales
         sorted_sales = total_sales_df.sort_values(by='predicted_sales', ascending=False).head(5)  # Top 5 shops
+
+        print(f"Top 5 shops: {sorted_sales}")
 
         # Prepare table data
         table_data = sorted_sales.to_dict(orient='records')
@@ -110,7 +108,7 @@ def predict_sales():
         img.seek(0)
         plot_url = base64.b64encode(img.getvalue()).decode()
 
-        # Return the chart and table data
+        print("Prediction complete, returning results.")
         return jsonify({'chart': plot_url, 'table': table_data})
 
     except Exception as e:
