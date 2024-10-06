@@ -11,31 +11,22 @@
         <h1>Sales Prediction</h1>
 
         <form id="prediction-form">
+            <label for="month">Month:</label>
+            <input type="number" id="month" name="month" min="1" max="12" required>
+
+            <label for="year">Year:</label>
+            <input type="number" id="year" name="year" required>
+
             <label for="shop_id">Shop ID:</label>
             <input type="number" id="shop_id" name="shop_id" required>
-
-            <label for="item_id">Item ID:</label>
-            <input type="number" id="item_id" name="item_id" required>
-
-            <label for="item_price">Item Price:</label>
-            <input type="number" id="item_price" name="item_price" required>
-
-            <label for="item_category_id">Item Category ID:</label>
-            <input type="number" id="item_category_id" name="item_category_id" required>
-
-            <label for="item_cnt_month_lag_1">Previous Month Sales (Lag 1):</label>
-            <input type="number" id="item_cnt_month_lag_1" name="item_cnt_month_lag_1" required>
-
-            <label for="item_cnt_month_lag_2">Previous Month Sales (Lag 2):</label>
-            <input type="number" id="item_cnt_month_lag_2" name="item_cnt_month_lag_2" required>
-
-            <label for="item_cnt_month_lag_3">Previous Month Sales (Lag 3):</label>
-            <input type="number" id="item_cnt_month_lag_3" name="item_cnt_month_lag_3" required>
 
             <button type="submit">Predict Sales</button>
         </form>
 
-        <div id="result"></div>
+        <div id="result">
+            <h2>Prediction Results</h2>
+            <img id="chart" alt="Sales Chart" />
+        </div>
     </div>
 
     <script src="app.js"></script>
