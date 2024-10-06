@@ -35,14 +35,14 @@ try:
 except Exception as e:
     print(f"Error loading preprocessed data: {e}")
 
-
 def predict_in_batches(predict_data, model, batch_size=100):
+    """Predict sales in smaller batches to avoid memory overload."""
     total_sales = []
     
     for i in range(0, len(predict_data), batch_size):
-        batch = predict_data.iloc[i:i + batch_size].copy()  # Make an explicit copy of the batch
+        batch = predict_data.iloc[i:i + batch_size].copy()  # Make an explicit copy of the batch to avoid the SettingWithCopyWarning
         predictions = model.predict(batch)
-        batch['predicted_sales'] = predictions
+        batch.loc[:, 'predicted_sales'] = predictions  # Use .loc to avoid SettingWithCopyWarning
         total_sales.append(batch)
         
     total_sales_df = pd.concat(total_sales, ignore_index=True)
@@ -64,26 +64,26 @@ def predict_sales():
 
         # Filter the sales data for the specific date_block_num
         sales_data_for_date = monthly_sales[monthly_sales['date_block_num'] == date_block_num]
-        
+        print("Filtered data for the date.")
+
         # Generate prediction dataset
-        print("Creating prediction dataset...")
         predict_data = pd.DataFrame({
             'shop_id': shops['shop_id'].reset_index(drop=True),
             'item_price': 1000,  # Placeholder value
         })
 
-        # Create the prediction dataset in smaller batches
+        # Predict sales for each shop in batches to prevent memory overload
         total_sales = []
         for shop_id in shops['shop_id']:
             print(f"Predicting for shop {shop_id}")
             shop_items = pd.DataFrame({
                 'shop_id': [shop_id] * len(items),
                 'item_id': items['item_id'],
-                'item_price': 1000,
+                'item_price': 1000,  # Placeholder value
                 'item_category_id': items['item_category_id'],
-                'item_cnt_month_lag_1': 0,
-                'item_cnt_month_lag_2': 0,
-                'item_cnt_month_lag_3': 0
+                'item_cnt_month_lag_1': 0,  # Placeholder lag values
+                'item_cnt_month_lag_2': 0,  # Placeholder lag values
+                'item_cnt_month_lag_3': 0   # Placeholder lag values
             })
 
             # Use batched predictions to avoid memory issues
@@ -101,6 +101,7 @@ def predict_sales():
 
         table_data = sorted_sales.to_dict(orient='records')
 
+        # Plot a pie chart for the top 5 shops
         plt.figure(figsize=(8, 8))
         plt.pie(sorted_sales['predicted_sales'], labels=sorted_sales['shop_id'], autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         plt.title(f'Top 5 Shops by Predicted Sales for {month}/{year}')
