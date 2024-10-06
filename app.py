@@ -11,7 +11,11 @@ import base64
 matplotlib.use('Agg')
 
 # Load the trained model
-model = joblib.load('sales_prediction_model.joblib')
+try:
+    model = joblib.load('sales_prediction_model.joblib')
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
 app = Flask(__name__, static_url_path='/static', static_folder='static', template_folder='.')
 CORS(app)
@@ -20,58 +24,99 @@ CORS(app)
 def home():
     return render_template('index.html')
 
+# Load necessary datasets
+items = pd.read_csv('data/items.csv')  # Load items data
+shops = pd.read_csv('data/shops.csv')  # Load shops data
+
+# Load the training data to create lag features
+sales_train = pd.read_csv('data/sales_train.csv')
+sales_train['date'] = pd.to_datetime(sales_train['date'], format='%d.%m.%Y')
+
+# Aggregate the sales data by month, shop, and item
+monthly_sales = sales_train.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False).agg({
+    'item_cnt_day': 'sum',
+    'item_price': 'mean'
+}).rename(columns={'item_cnt_day': 'item_cnt_month'})
+
+# Merge item categories
+monthly_sales = monthly_sales.merge(items[['item_id', 'item_category_id']], on='item_id', how='left')
+
+# Create lag features
+for lag in [1, 2, 3]:
+    lag_col_name = f'item_cnt_month_lag_{lag}'
+    monthly_sales[lag_col_name] = monthly_sales.groupby(['shop_id', 'item_id'])['item_cnt_month'].shift(lag)
+
+# Fill missing values with 0
+monthly_sales.fillna(0, inplace=True)
+
+# Prediction route
 @app.route('/predict', methods=['POST'])
 def predict_sales():
-    """
-    Input JSON format:
-    {
-        "month": 6,
-        "year": 2023,
-        "shop_id": 25
-    }
-    """
-    input_data = request.json
-    month = input_data['month']
-    year = input_data['year']
-    shop_id = input_data['shop_id']
+    try:
+        # Extract input data
+        input_data = request.json
+        month = input_data['month']
+        year = input_data['year']
 
-    # Convert month and year to date_block_num if needed
-    date_block_num = (year - 2013) * 12 + (month - 1)
+        # Convert month and year to date_block_num
+        date_block_num = (year - 2013) * 12 + (month - 1)
 
-    # Create a dataset for predictions using shop_id and date_block_num
-    items = pd.read_csv('data/items.csv')
-    predict_data = pd.DataFrame({
-        'shop_id': shop_id,
-        'item_id': items['item_id'],
-        'item_price': 1000,  # Placeholder value
-        'item_category_id': items['item_category_id'],
-        'item_cnt_month_lag_1': 0,  # Placeholder for lags
-        'item_cnt_month_lag_2': 0,
-        'item_cnt_month_lag_3': 0
-    })
+        # Create a dataset for predictions for all shops (aggregated by shop)
+        predict_data = pd.DataFrame({
+            'shop_id': shops['shop_id'].reset_index(drop=True),
+            'item_price': 1000,  # Placeholder value
+        })
 
-    # Predict sales
-    predictions = model.predict(predict_data)
-    predict_data['predicted_sales'] = predictions
+        # For each shop, predict total sales for that shop by summing item sales
+        total_sales = []
+        for shop_id in shops['shop_id']:
+            # Create dummy data for items in each shop
+            shop_items = pd.DataFrame({
+                'shop_id': [shop_id] * len(items),
+                'item_id': items['item_id'],
+                'item_price': 1000,  # Placeholder value
+                'item_category_id': items['item_category_id'],
+                'item_cnt_month_lag_1': 0,
+                'item_cnt_month_lag_2': 0,
+                'item_cnt_month_lag_3': 0
+            })
 
-    # Sort predictions
-    sorted_predictions = predict_data.sort_values(by='predicted_sales', ascending=False)
+            # Predict for each item in the shop
+            predictions = model.predict(shop_items)
+            total_shop_sales = predictions.sum()  # Sum the predicted sales for the shop
+            total_sales.append({
+                'shop_id': shop_id,
+                'predicted_sales': total_shop_sales
+            })
 
-    # Plot horizontal bar chart
-    plt.barh(sorted_predictions['item_id'], sorted_predictions['predicted_sales'], color='skyblue')
-    plt.xlabel('Predicted Sales')
-    plt.ylabel('Item ID')
-    plt.title(f'Sales Prediction for Shop {shop_id} in {month}/{year}')
-    plt.gca().invert_yaxis()
+        # Convert results to DataFrame
+        total_sales_df = pd.DataFrame(total_sales)
 
-    # Convert plot to image
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
+        # Sort predictions by sales
+        sorted_sales = total_sales_df.sort_values(by='predicted_sales', ascending=False).head(5)  # Top 5 shops
 
-    # Return the base64 encoded image
-    return jsonify({'chart': plot_url})
+        # Prepare table data
+        table_data = sorted_sales.to_dict(orient='records')
+
+        # Create a pie chart for the top 5 shops
+        plt.figure(figsize=(8, 8))
+        plt.pie(sorted_sales['predicted_sales'], labels=sorted_sales['shop_id'], autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
+        plt.title(f'Top 5 Shops by Predicted Sales for {month}/{year}')
+        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+        # Convert plot to image
+        img = io.BytesIO()
+        plt.savefig(img, format='png')
+        img.seek(0)
+        plot_url = base64.b64encode(img.getvalue()).decode()
+
+        # Return the chart and table data
+        return jsonify({'chart': plot_url, 'table': table_data})
+
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return jsonify({"error": "Something went wrong on the server."}), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
