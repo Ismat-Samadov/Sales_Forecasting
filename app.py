@@ -28,7 +28,7 @@ def home():
 items = pd.read_csv('data/items.csv')  # Load items data
 shops = pd.read_csv('data/shops.csv')  # Load shops data
 
-# Load preprocessed sales data from the pickle file
+# Load the preprocessed sales data
 try:
     monthly_sales = joblib.load('data/processed_sales.pkl')
     print("Preprocessed data loaded successfully.")
@@ -41,7 +41,7 @@ def predict_in_batches(predict_data, model, batch_size=100):
     for i in range(0, len(predict_data), batch_size):
         batch = predict_data.iloc[i:i + batch_size]
         predictions = model.predict(batch)
-        batch['predicted_sales'] = predictions
+        batch.loc[:, 'predicted_sales'] = predictions  # Use .loc to avoid the warning
         total_sales.append(batch)
         
     total_sales_df = pd.concat(total_sales, ignore_index=True)
