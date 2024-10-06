@@ -18,7 +18,12 @@ document.getElementById('prediction-form').addEventListener('submit', function(e
     })
     .then(response => response.json())
     .then(data => {
-        // Display the chart
+        if (!data || !data.table || !data.chart) {
+            console.error('Invalid server response');
+            return;
+        }
+
+        // Display the chart (now a pie chart)
         if (data.chart) {
             const chart = document.getElementById('chart');
             chart.src = 'data:image/png;base64,' + data.chart;
