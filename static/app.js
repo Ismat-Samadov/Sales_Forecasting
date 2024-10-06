@@ -18,14 +18,14 @@ document.getElementById('prediction-form').addEventListener('submit', function(e
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         return response.json();
     })
     .then(data => {
         if (!data || !data.table || !data.chart) {
-            console.error('Invalid server response');
-            alert("An error occurred while processing the request. Please try again.");
+            console.error('Invalid server response:', data);
+            alert("An error occurred while processing the request. The server returned invalid data.");
             return;
         }
 
@@ -51,7 +51,7 @@ document.getElementById('prediction-form').addEventListener('submit', function(e
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error during prediction request:', error);
         alert("An error occurred while processing the request. Please check the server and try again.");
     });
 });

@@ -52,7 +52,7 @@ monthly_sales.fillna(0, inplace=True)
 @app.route('/predict', methods=['POST'])
 def predict_sales():
     try:
-        # Extract input data
+        # Log the received data
         input_data = request.json
         print(f"Received input data: {input_data}")
 
@@ -63,7 +63,8 @@ def predict_sales():
         date_block_num = (year - 2013) * 12 + (month - 1)
         print(f"Using date_block_num: {date_block_num}")
 
-        # Create a dataset for predictions for all shops (aggregated by shop)
+        # Generate prediction dataset
+        print("Creating prediction dataset...")
         predict_data = pd.DataFrame({
             'shop_id': shops['shop_id'].reset_index(drop=True),
             'item_price': 1000,  # Placeholder value
@@ -71,6 +72,7 @@ def predict_sales():
 
         total_sales = []
         for shop_id in shops['shop_id']:
+            print(f"Predicting for shop {shop_id}")
             shop_items = pd.DataFrame({
                 'shop_id': [shop_id] * len(items),
                 'item_id': items['item_id'],
@@ -82,33 +84,31 @@ def predict_sales():
             })
 
             predictions = model.predict(shop_items)
-            total_shop_sales = predictions.sum()  # Sum the predicted sales for the shop
+            total_shop_sales = predictions.sum()
             total_sales.append({
                 'shop_id': shop_id,
                 'predicted_sales': total_shop_sales
             })
 
+        # Sort the results and create the chart
+        print("Sorting and generating chart...")
         total_sales_df = pd.DataFrame(total_sales)
-        sorted_sales = total_sales_df.sort_values(by='predicted_sales', ascending=False).head(5)  # Top 5 shops
+        sorted_sales = total_sales_df.sort_values(by='predicted_sales', ascending=False).head(5)
 
-        print(f"Top 5 shops: {sorted_sales}")
-
-        # Prepare table data
         table_data = sorted_sales.to_dict(orient='records')
 
-        # Create a pie chart for the top 5 shops
         plt.figure(figsize=(8, 8))
         plt.pie(sorted_sales['predicted_sales'], labels=sorted_sales['shop_id'], autopct='%1.1f%%', startangle=90, colors=plt.cm.Paired.colors)
         plt.title(f'Top 5 Shops by Predicted Sales for {month}/{year}')
-        plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        plt.axis('equal')
 
-        # Convert plot to image
+        # Convert the pie chart to a base64 image
         img = io.BytesIO()
         plt.savefig(img, format='png')
         img.seek(0)
         plot_url = base64.b64encode(img.getvalue()).decode()
 
-        print("Prediction complete, returning results.")
+        print("Prediction complete, returning response...")
         return jsonify({'chart': plot_url, 'table': table_data})
 
     except Exception as e:
