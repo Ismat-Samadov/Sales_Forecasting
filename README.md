@@ -16,8 +16,8 @@ This repository contains the code for the Kaggle competition "Store Sales - Time
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Ismat-Samadov/Store-Sales---Time-Series-Forecasting.git
-   cd Store-Sales---Time-Series-Forecasting
+   git clone https://github.com/Ismat-Samadov/Sales_Forecasting.git
+   cd Sales_Forecasting
    ```
 
 2. Install the required libraries:
