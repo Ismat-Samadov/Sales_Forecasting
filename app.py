@@ -28,26 +28,12 @@ def home():
 items = pd.read_csv('data/items.csv')  # Load items data
 shops = pd.read_csv('data/shops.csv')  # Load shops data
 
-# Load the training data to create lag features
-sales_train = pd.read_csv('data/sales_train.csv')
-sales_train['date'] = pd.to_datetime(sales_train['date'], format='%d.%m.%Y')
-
-# Aggregate the sales data by month, shop, and item
-monthly_sales = sales_train.groupby(['date_block_num', 'shop_id', 'item_id'], as_index=False).agg({
-    'item_cnt_day': 'sum',
-    'item_price': 'mean'
-}).rename(columns={'item_cnt_day': 'item_cnt_month'})
-
-# Merge item categories
-monthly_sales = monthly_sales.merge(items[['item_id', 'item_category_id']], on='item_id', how='left')
-
-# Create lag features
-for lag in [1, 2, 3]:
-    lag_col_name = f'item_cnt_month_lag_{lag}'
-    monthly_sales[lag_col_name] = monthly_sales.groupby(['shop_id', 'item_id'])['item_cnt_month'].shift(lag)
-
-# Fill missing values with 0
-monthly_sales.fillna(0, inplace=True)
+# Load preprocessed sales data from the pickle file
+try:
+    monthly_sales = joblib.load('data/processed_sales.pkl')
+    print("Preprocessed data loaded successfully.")
+except Exception as e:
+    print(f"Error loading preprocessed data: {e}")
 
 def predict_in_batches(predict_data, model, batch_size=100):
     total_sales = []
@@ -75,6 +61,9 @@ def predict_sales():
         date_block_num = (year - 2013) * 12 + (month - 1)
         print(f"Using date_block_num: {date_block_num}")
 
+        # Filter the sales data for the specific date_block_num
+        sales_data_for_date = monthly_sales[monthly_sales['date_block_num'] == date_block_num]
+        
         # Generate prediction dataset
         print("Creating prediction dataset...")
         predict_data = pd.DataFrame({
