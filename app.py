@@ -49,7 +49,7 @@ for lag in [1, 2, 3]:
 # Fill missing values with 0
 monthly_sales.fillna(0, inplace=True)
 
-def predict_in_batches(predict_data, model, batch_size=500):
+def predict_in_batches(predict_data, model, batch_size=100):
     total_sales = []
     
     for i in range(0, len(predict_data), batch_size):
