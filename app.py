@@ -49,6 +49,18 @@ for lag in [1, 2, 3]:
 # Fill missing values with 0
 monthly_sales.fillna(0, inplace=True)
 
+def predict_in_batches(predict_data, model, batch_size=500):
+    total_sales = []
+    
+    for i in range(0, len(predict_data), batch_size):
+        batch = predict_data.iloc[i:i + batch_size]
+        predictions = model.predict(batch)
+        batch['predicted_sales'] = predictions
+        total_sales.append(batch)
+        
+    total_sales_df = pd.concat(total_sales, ignore_index=True)
+    return total_sales_df
+
 @app.route('/predict', methods=['POST'])
 def predict_sales():
     try:
@@ -70,6 +82,7 @@ def predict_sales():
             'item_price': 1000,  # Placeholder value
         })
 
+        # Create the prediction dataset in smaller batches
         total_sales = []
         for shop_id in shops['shop_id']:
             print(f"Predicting for shop {shop_id}")
@@ -83,8 +96,9 @@ def predict_sales():
                 'item_cnt_month_lag_3': 0
             })
 
-            predictions = model.predict(shop_items)
-            total_shop_sales = predictions.sum()
+            # Use batched predictions to avoid memory issues
+            predicted_sales_batch = predict_in_batches(shop_items, model)
+            total_shop_sales = predicted_sales_batch['predicted_sales'].sum()
             total_sales.append({
                 'shop_id': shop_id,
                 'predicted_sales': total_shop_sales
@@ -114,7 +128,6 @@ def predict_sales():
     except Exception as e:
         print(f"Error during prediction: {e}")
         return jsonify({"error": "Something went wrong on the server."}), 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
