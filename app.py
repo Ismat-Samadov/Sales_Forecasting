@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import io
 import base64
 import matplotlib
+import os
 
 # Use the 'Agg' backend to prevent GUI-related issues with Matplotlib
 matplotlib.use('Agg')
@@ -15,6 +16,10 @@ app = Flask(__name__)
 # Load the trained model and columns
 model = joblib.load('xgb_coffee_sales_model.joblib')
 original_columns = joblib.load('columns.pkl')
+
+# Remove 'Total Sales' from original columns if it's still there
+if 'Total Sales' in original_columns:
+    original_columns = original_columns.drop('Total Sales')
 
 @app.route('/')
 def home():
@@ -47,8 +52,11 @@ def predict():
             'month': [month],
             "store_location_Hell's Kitchen": [store_dummy[0]],
             'store_location_Lower Manhattan': [store_dummy[1]],
-            f'product_category_{category}': [1]  # Set the current category to 1
         }
+
+        # Set current category to 1 and others to 0
+        for cat in categories:
+            input_features[f'product_category_{cat}'] = [1 if cat == category else 0]
 
         input_df = pd.DataFrame(input_features)
 
@@ -57,12 +65,8 @@ def predict():
             if col not in input_df.columns:
                 input_df[col] = 0
 
-        # Ensure correct column order
+        # Ensure no extra columns in input data
         input_df = input_df[original_columns]
-
-        # Remove 'Total Sales' if it exists
-        if 'Total Sales' in input_df.columns:
-            input_df = input_df.drop('Total Sales', axis=1)
 
         # Make prediction for the current category
         predicted_sales = model.predict(input_df)
