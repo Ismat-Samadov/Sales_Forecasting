@@ -18,22 +18,25 @@ document.getElementById('prediction-form').addEventListener('submit', function (
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            alert('Error: ' + data.error);
-        } else {
-            // Display chart
-            const chartDiv = document.getElementById('chart');
-            chartDiv.innerHTML = `<img src="data:image/png;base64,${data.chart}" alt="Sales Chart">`;
+        // Display chart
+        const chartDiv = document.getElementById('chart');
+        chartDiv.innerHTML = `<img src="data:image/png;base64,${data.chart}" alt="Sales Chart">`;
 
-            // Display sales table
-            const tableBody = document.querySelector('#sales-table tbody');
-            tableBody.innerHTML = '';
-            for (const [category, sales] of Object.entries(data.sales)) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${category}</td><td>${sales.toFixed(2)}</td>`;
-                tableBody.appendChild(tr);
-            }
+        // Display sales predictions in a nicely formatted table
+        const salesDiv = document.getElementById('sales');
+        let salesTable = `<table id="sales-table">
+            <thead>
+                <tr>
+                    <th>Product Category</th>
+                    <th>Predicted Sales</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        for (let category in data.sales) {
+            salesTable += `<tr><td>${category}</td><td>${data.sales[category].toFixed(2)}</td></tr>`;
         }
+        salesTable += `</tbody></table>`;
+        salesDiv.innerHTML = salesTable;
     })
     .catch(error => console.error('Error:', error));
 });

@@ -3,45 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Prediction</title>
+    <title>Coffee Sales Prediction</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Predict Coffee Shop Sales</h1>
-    <form id="prediction-form">
-        <label for="year">Select Year:</label>
-        <input type="number" id="year" name="year" required min="2010" max="2030">
-        <br><br>
+    <div class="container">
+        <h1>Coffee Sales Prediction</h1>
+        <form id="prediction-form" class="prediction-form">
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <select id="year" name="year" required>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
 
-        <label for="month">Select Month:</label>
-        <input type="number" id="month" name="month" required min="1" max="12">
-        <br><br>
+            <div class="form-group">
+                <label for="month">Month:</label>
+                <select id="month" name="month" required>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
 
-        <label for="store_location">Select Store Location:</label>
-        <select id="store_location" name="store_location">
-            <option value="Lower Manhattan">Lower Manhattan</option>
-            <option value="Hell's Kitchen">Hell's Kitchen</option>
-            <option value="Astoria">Astoria</option>
-        </select>
-        <br><br>
+            <div class="form-group">
+                <label for="store_location">Store Location:</label>
+                <select id="store_location" name="store_location" required>
+                    <option value="Lower Manhattan">Lower Manhattan</option>
+                    <option value="Hell's Kitchen">Hell's Kitchen</option>
+                    <option value="Astoria">Astoria</option>
+                </select>
+            </div>
 
-        <button type="submit">Predict Sales</button>
-    </form>
+            <button type="submit" class="btn">Predict Sales</button>
+        </form>
 
-    <div id="result">
         <h2>Predicted Sales</h2>
         <div id="chart"></div>
-        <table id="sales-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Predicted Sales</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Data will be inserted here -->
-            </tbody>
-        </table>
+        <div id="sales"></div>
     </div>
 
     <script src="/static/app.js"></script>

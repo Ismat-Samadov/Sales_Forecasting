@@ -1,37 +1,133 @@
+/* Basic styling */
 body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
 }
 
-h1, h2 {
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
     color: #333;
+    text-align: center;
+    font-weight: 600;
+}
+
+h2 {
+    color: #444;
+    font-size: 1.5em;
+    text-align: center;
+    margin-top: 30px;
 }
 
 form {
-    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
 }
 
-input, select, button {
+label {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+input, select {
     padding: 10px;
-    margin: 5px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-#result {
+.btn {
+    padding: 12px;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Mobile-friendly */
+@media only screen and (max-width: 600px) {
+    .container {
+        margin: 20px;
+        padding: 15px;
+    }
+
+    input, select {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    .btn {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 1.2em;
+    }
+}
+
+#chart img {
+    max-width: 100%;
+    height: auto;
+}
+
+h3 {
     margin-top: 20px;
+    text-align: center;
 }
 
+p {
+    font-size: 16px;
+    text-align: center;
+}
+
+/* Styling for the Sales Predictions table */
 table {
-    width: 50%;
+    width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin: 20px 0;
+    font-size: 16px;
 }
 
-table, th, td {
-    border: 1px solid #333;
+table th, table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: center;
 }
 
-th, td {
-    padding: 10px;
+table th {
+    background-color: #007BFF;
+    color: white;
+    font-weight: 600;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+#sales-table {
+    margin-top: 30px;
+    width: 100%;
     text-align: left;
 }
-
