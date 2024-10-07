@@ -1,8 +1,9 @@
 document.getElementById('prediction-form').addEventListener('submit', function (e) {
     e.preventDefault();
 
-    const shop = document.getElementById('shop').value;
-    const monthsToPredict = document.getElementById('months_to_predict').value;
+    const year = document.getElementById('year').value;
+    const month = document.getElementById('month').value;
+    const store_location = document.getElementById('store_location').value;
 
     fetch('/predict', {
         method: 'POST',
@@ -10,22 +11,29 @@ document.getElementById('prediction-form').addEventListener('submit', function (
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            shop_id: parseInt(shop),
-            months_to_predict: parseInt(monthsToPredict)
+            year: year,
+            month: month,
+            store_location: store_location
         })
     })
     .then(response => response.json())
     .then(data => {
-        const chartDiv = document.getElementById('chart');
-        chartDiv.innerHTML = `<img src="data:image/png;base64,${data.chart}" alt="Sales Chart">`;
+        if (data.error) {
+            alert('Error: ' + data.error);
+        } else {
+            // Display chart
+            const chartDiv = document.getElementById('chart');
+            chartDiv.innerHTML = `<img src="data:image/png;base64,${data.chart}" alt="Sales Chart">`;
 
-        const tableBody = document.querySelector('#sales-table tbody');
-        tableBody.innerHTML = '';
-        data.predictions.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${row.month}</td><td>${row.predicted_sales}</td>`;
-            tableBody.appendChild(tr);
-        });
+            // Display sales table
+            const tableBody = document.querySelector('#sales-table tbody');
+            tableBody.innerHTML = '';
+            for (const [category, sales] of Object.entries(data.sales)) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${category}</td><td>${sales.toFixed(2)}</td>`;
+                tableBody.appendChild(tr);
+            }
+        }
     })
     .catch(error => console.error('Error:', error));
 });

@@ -1,79 +1,77 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
-import joblib
 import pandas as pd
+from flask import Flask, request, jsonify, render_template
+import joblib
 import matplotlib.pyplot as plt
 import io
 import base64
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
 
-# Load the trained sales prediction model
-model = joblib.load('sales_prediction_model.joblib')
-
-# Load historical sales data (from CSV or database)
-historical_sales = pd.read_csv('data/sales_train.csv')
-shops = pd.read_csv('data/shops.csv')
-
-# Generate lag features for model input
-def create_lag_features(data, lags=3):
-    for lag in range(1, lags + 1):
-        data[f'item_cnt_month_lag_{lag}'] = data['item_cnt_month'].shift(lag)
-    return data.dropna()
-
-# Prediction for a selected shop over a time window
-def predict_sales_for_time_window(shop_id, months_to_predict):
-    # Filter sales for the selected shop
-    shop_data = historical_sales[historical_sales['shop_id'] == shop_id]
-
-    # Create lag features based on past data
-    shop_data_with_lags = create_lag_features(shop_data)
-
-    predictions = []
-    for month in range(1, months_to_predict + 1):
-        # Predict sales using the trained model
-        predicted_sales = model.predict(shop_data_with_lags.drop(columns=['item_cnt_month']))
-        predictions.append({
-            'month': month,
-            'predicted_sales': predicted_sales.sum()  # Sum sales predictions across all items for that shop
-        })
-
-    return predictions
+# Load the trained model and the original columns
+model = joblib.load('xgb_coffee_sales_model.joblib')
+original_columns = joblib.load('columns.pkl')  # Load the columns used during training
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
-def predict_sales():
-    try:
-        input_data = request.json
-        shop_id = int(input_data['shop_id'])
-        months_to_predict = int(input_data['months_to_predict'])
+def predict():
+    input_data = request.json
+    year = int(input_data['year'])
+    month = int(input_data['month'])
+    store_location = input_data['store_location']
 
-        # Call prediction function
-        predictions = predict_sales_for_time_window(shop_id, months_to_predict)
+    # Map store location to dummy variables
+    store_dummy = [0, 0]  # Hell's Kitchen, Lower Manhattan
+    if store_location == "Hell's Kitchen":
+        store_dummy[0] = 1
+    elif store_location == 'Lower Manhattan':
+        store_dummy[1] = 1
 
-        # Prepare bar chart
-        df_predictions = pd.DataFrame(predictions)
-        plt.figure(figsize=(8, 6))
-        plt.bar(df_predictions['month'], df_predictions['predicted_sales'])
-        plt.xlabel('Month')
-        plt.ylabel('Predicted Sales')
-        plt.title(f'Shop {shop_id} - Sales Prediction')
+    # Create input features
+    input_features = {
+        'year': [year],
+        'month': [month],
+        "store_location_Hell's Kitchen": [store_dummy[0]],
+        'store_location_Lower Manhattan': [store_dummy[1]]
+    }
 
-        # Convert chart to image
-        img = io.BytesIO()
-        plt.savefig(img, format='png')
-        img.seek(0)
-        chart_url = base64.b64encode(img.getvalue()).decode()
+    input_df = pd.DataFrame(input_features)
 
-        return jsonify({'chart': chart_url, 'predictions': predictions})
+    # Add missing columns and set them to 0
+    for col in original_columns:
+        if col not in input_df.columns:
+            input_df[col] = 0
 
-    except Exception as e:
-        return jsonify({'error': str(e)})
+    # Ensure correct column order
+    input_df = input_df[original_columns]
+
+    # Remove 'Total Sales' from the input dataframe if it exists
+    if 'Total Sales' in input_df.columns:
+        input_df = input_df.drop('Total Sales', axis=1)
+
+    # Make prediction
+    predicted_sales = model.predict(input_df)
+
+    # Prepare the output (sample for predefined categories)
+    categories = ['Coffee', 'Tea', 'Drinking Chocolate', 'Bakery', 'Flavours', 'Loose Tea', 'Coffee beans', 'Packaged Chocolate', 'Branded']
+    sales_predictions = {category: predicted_sales[0] for category in categories}
+
+    # Plot a bar chart
+    plt.figure(figsize=(10, 6))
+    plt.bar(sales_predictions.keys(), sales_predictions.values())
+    plt.xlabel('Product Category')
+    plt.ylabel('Predicted Sales')
+    plt.title(f'Predicted Sales for {store_location} in {year}-{month}')
+
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    chart_url = base64.b64encode(img.getvalue()).decode()
+
+    return jsonify({'chart': chart_url, 'sales': sales_predictions})
 
 if __name__ == '__main__':
     app.run(debug=True)
