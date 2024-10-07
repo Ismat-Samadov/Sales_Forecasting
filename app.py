@@ -25,8 +25,8 @@ def home():
     return render_template('index.html')
 
 # Load actual shops and items dataset from your provided CSVs
-shops = pd.read_csv('data/shops.csv')  # Replace with actual path to shops.csv
-items = pd.read_csv('data/items.csv')  # Replace with actual path to items.csv
+shops = pd.read_csv('data/shops.csv')  
+items = pd.read_csv('data/items.csv') 
 
 def predict_sales_for_year(shop_id, year):
     """Predict sales for each month of the selected year for the selected shop."""
