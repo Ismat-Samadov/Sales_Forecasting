@@ -1,98 +1,52 @@
-/* General styling */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
-
-.container {
-    max-width: 800px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-}
-
-h1, h2 {
-    text-align: center;
+    margin: 20px;
 }
 
 form {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
     margin-bottom: 20px;
 }
 
-select, button {
-    padding: 10px;
-    font-size: 16px;
+label {
+    display: block;
+    margin: 5px 0;
+}
+
+input, select {
+    padding: 8px;
+    margin-bottom: 10px;
     width: 100%;
-    max-width: 150px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+    max-width: 300px;
 }
 
 button {
-    background-color: #007bff;
+    padding: 10px;
+    background-color: #4CAF50;
     color: white;
     border: none;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #45a049;
 }
 
-#table-container {
-    margin: 20px 0;
-    overflow-x: auto;
+#result {
+    margin-top: 20px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
-thead {
-    background-color: #007bff;
-    color: white;
-}
-
-th, td {
+table, th, td {
+    border: 1px solid black;
     padding: 10px;
     text-align: center;
-    border: 1px solid #ddd;
 }
 
-#chart {
-    display: block;
-    margin: 20px auto;
-    max-width: 100%;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-    .container {
-        margin: 20px;
-        padding: 15px;
-    }
-
-    form {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    select, button {
-        width: 100%;
-        max-width: none;
-    }
-
-    table, th, td {
-        font-size: 14px;
-    }
+th {
+    background-color: #f2f2f2;
 }
