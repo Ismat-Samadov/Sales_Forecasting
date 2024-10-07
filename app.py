@@ -17,7 +17,7 @@ try:
 except Exception as e:
     print(f"Error loading model: {e}")
 
-app = Flask(__name__, static_url_path='/static', static_folder='static', template_folder='.')
+app = Flask(__name__, static_url_path='/static', static_folder='static', template_folder='templates')
 CORS(app)
 
 @app.route('/')
