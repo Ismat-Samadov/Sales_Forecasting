@@ -41,16 +41,16 @@ def predict_sales_for_month(filtered_data):
         # Ensure the prediction is non-negative
         predicted_sales = max(0, predicted_sales)
         
-        # Append the results for this row
-        results.append({
-            'Retailer': row['Retailer'],
-            'Product': row['Product'],
-            'Predicted Sales': predicted_sales
-        })
-    
+        # Only include predictions greater than zero
+        if predicted_sales > 0:
+            # Append the results for this row
+            results.append({
+                'Retailer': row['Retailer'],
+                'Product': row['Product'],
+                'Predicted Sales': predicted_sales
+            })
+        
     return results
-
-
 
 @app.route('/')
 def index():
@@ -71,6 +71,10 @@ def predict_sales():
     
     # Predict sales for the month
     predictions = predict_sales_for_month(filtered_data)
+    
+    # If no positive predictions are available
+    if not predictions:
+        return jsonify({'message': 'No positive sales predictions for the selected month and year'})
     
     return jsonify({'predictions': predictions})
 
