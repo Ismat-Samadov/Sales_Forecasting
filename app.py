@@ -4,6 +4,7 @@ import joblib
 import matplotlib.pyplot as plt
 import io
 import base64
+import calendar  # To determine the number of days in a month
 import matplotlib
 import os
 
@@ -16,10 +17,6 @@ app = Flask(__name__)
 # Load the trained model and columns
 model = joblib.load('xgb_coffee_sales_model.joblib')
 original_columns = joblib.load('columns.pkl')
-
-# Remove 'Total Sales' from original columns if it's still there
-if 'Total Sales' in original_columns:
-    original_columns = original_columns.drop('Total Sales')
 
 @app.route('/')
 def home():
@@ -42,35 +39,44 @@ def predict():
     # Define product categories
     categories = ['Coffee', 'Tea', 'Drinking Chocolate', 'Bakery', 'Flavours', 'Loose Tea', 'Coffee beans', 'Packaged Chocolate', 'Branded']
 
+    # Get the number of days in the specified month/year
+    num_days = calendar.monthrange(year, month)[1]
+
     sales_predictions = {}
 
-    # Predict sales for each product category
+    # Initialize sales for each category as 0
     for category in categories:
-        # Create input features for each category
-        input_features = {
-            'year': [year],
-            'month': [month],
-            "store_location_Hell's Kitchen": [store_dummy[0]],
-            'store_location_Lower Manhattan': [store_dummy[1]],
-        }
+        sales_predictions[category] = 0.0
 
-        # Set current category to 1 and others to 0
-        for cat in categories:
-            input_features[f'product_category_{cat}'] = [1 if cat == category else 0]
+    # Predict sales for each day of the month and sum them
+    for day in range(1, num_days + 1):
+        for category in categories:
+            # Create input features for each category
+            input_features = {
+                'year': [year],
+                'month': [month],
+                "store_location_Hell's Kitchen": [store_dummy[0]],
+                'store_location_Lower Manhattan': [store_dummy[1]],
+                f'product_category_{category}': [1]  # Set the current category to 1
+            }
 
-        input_df = pd.DataFrame(input_features)
+            input_df = pd.DataFrame(input_features)
 
-        # Add missing columns and set them to 0
-        for col in original_columns:
-            if col not in input_df.columns:
-                input_df[col] = 0
+            # Add missing columns and set them to 0
+            for col in original_columns:
+                if col not in input_df.columns:
+                    input_df[col] = 0
 
-        # Ensure no extra columns in input data
-        input_df = input_df[original_columns]
+            # Ensure correct column order
+            input_df = input_df[original_columns]
 
-        # Make prediction for the current category
-        predicted_sales = model.predict(input_df)
-        sales_predictions[category] = float(predicted_sales[0])  # Convert to Python float for JSON serialization
+            # Remove 'Total Sales' if it exists
+            if 'Total Sales' in input_df.columns:
+                input_df = input_df.drop('Total Sales', axis=1)
+
+            # Predict sales for the current day and current category
+            predicted_sales = model.predict(input_df)
+            sales_predictions[category] += float(predicted_sales[0])  # Add to the monthly sum
 
     # Sort sales_predictions by value (predicted sales)
     sorted_sales_predictions = dict(sorted(sales_predictions.items(), key=lambda item: item[1], reverse=True))
@@ -80,7 +86,7 @@ def predict():
     plt.plot(list(sorted_sales_predictions.keys()), list(sorted_sales_predictions.values()), marker='o')
     plt.xlabel('Product Category')
     plt.ylabel('Predicted Sales')
-    plt.title(f'Predicted Sales for {store_location} in {year}-{month}')
+    plt.title(f'Total Predicted Sales for {store_location} in {year}-{month}')
     plt.xticks(rotation=45)  # Rotate category names for better readability
 
     img = io.BytesIO()
@@ -92,5 +98,5 @@ def predict():
     return jsonify({'chart': chart_url, 'sales': sorted_sales_predictions})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port)
