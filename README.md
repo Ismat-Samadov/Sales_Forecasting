@@ -22,6 +22,8 @@ This project demonstrates a simple sales forecasting model using Linear Regressi
 
 ### Dataset
 
+Data Source: https://www.kaggle.com/datasets/heemalichaudhari/adidas-sales-dataset
+
 The dataset used in this project is `Adidas_US_Sales_Cleaned.csv`, which contains the following key columns:
 
 - **Price per Unit**: Price of a single unit of a product.
